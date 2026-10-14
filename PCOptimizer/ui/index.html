@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCOptimizer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Фон: свечение, сетка, плавающие пятна, бегущая строка развёртки -->
+<div class="bg"></div>
+<div class="orbs">
+  <span class="orb o1"></span>
+  <span class="orb o2"></span>
+  <span class="orb o3"></span>
+</div>
+<div class="scanline"></div>
+
+<!-- Свой заголовок окна: за него окно таскается мышкой -->
+<header class="titlebar" id="titlebar">
+  <div class="brand">
+    <img class="logo" src="logo.png" alt="">
+    <div class="brand-text">
+      <span class="name">PC<span class="accent">Optimizer</span></span>
+      <span class="sub" id="statusText">подключение к системе…</span>
+    </div>
+  </div>
+  <div class="win-buttons">
+    <button class="win-btn" id="btnMin" title="Свернуть">
+      <svg viewBox="0 0 10 10"><path d="M1 5h8"/></svg>
+    </button>
+    <button class="win-btn close" id="btnClose" title="Закрыть">
+      <svg viewBox="0 0 10 10"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ВКЛАДКИ -->
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-page="monitor">Мониторинг</button>
+  <button class="tab" data-page="system">Мой ПК</button>
+  <button class="tab" data-page="clean">Очистка</button>
+  <button class="tab" data-page="optimize">Оптимизация</button>
+  <button class="tab" data-page="games">Игры</button>
+  <button class="tab" data-page="settings">Настройки</button>
+</nav>
+
+<!-- Если программу запустили без прав администратора — честно об этом скажем -->
+<div class="admin-banner" id="adminBanner">
+  <span class="ab-icon">!</span>
+  <span class="ab-text">
+    Программа работает <b>без прав администратора</b>. Очистка системных папок,
+    службы и обслуживание дисков будут недоступны.
+  </span>
+  <button class="neon-btn small" id="btnElevateBanner">
+    <span class="glow"></span><span class="txt">Запустить от администратора</span>
+  </button>
+</div>
+
+<!-- СОДЕРЖИМОЕ ВКЛАДОК -->
+<div class="pages">
+
+  <!-- ===================== МОНИТОРИНГ ===================== -->
+  <section class="page active" id="page-monitor">
+
+    <main class="grid">
+
+      <!-- ПРОЦЕССОР -->
+      <section class="card gauge-card" id="cpuCard">
+        <div class="card-head">
+          <span class="card-title">Процессор</span>
+          <span class="card-sub" id="cpuName">—</span>
+        </div>
+
+        <div class="gauge">
+          <svg viewBox="0 0 200 200">
+            <circle class="track" cx="100" cy="100" r="90"/>
+            <circle class="fill cpu-fill" cx="100" cy="100" r="90" id="cpuArc"/>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-value"><span id="cpuLoad">0</span><span class="unit">%</span></div>
+            <div class="gauge-label">загрузка</div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="k">Температура</span>
+            <span class="v" id="cpuTemp">н/д</span>
+          </div>
+          <div class="stat">
+            <span class="k">Частота</span>
+            <span class="v" id="cpuFreq">—</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ВИДЕОКАРТА -->
+      <section class="card gauge-card" id="gpuCard">
+        <div class="card-head">
+          <span class="card-title">Видеокарта</span>
+          <span class="card-sub" id="gpuName">—</span>
+        </div>
+
+        <div class="gauge">
+          <svg viewBox="0 0 200 200">
+            <circle class="track" cx="100" cy="100" r="90"/>
+            <circle class="fill gpu-fill" cx="100" cy="100" r="90" id="gpuArc"/>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-value"><span id="gpuLoad">0</span><span class="unit">%</span></div>
+            <div class="gauge-label">загрузка</div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="k">Температура</span>
+            <span class="v" id="gpuTemp">н/д</span>
+          </div>
+          <div class="stat">
+            <span class="k">Частота</span>
+            <span class="v" id="gpuClock">—</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ПРАВАЯ КОЛОНКА: память и видеопамять -->
+      <div class="side">
+        <section class="card bar-card">
+          <div class="card-head">
+            <span class="card-title">Оперативная память</span>
+            <span class="card-sub" id="ramPercent">0%</span>
+          </div>
+          <div class="bar"><div class="bar-fill ram-fill" id="ramBar"></div></div>
+          <div class="bar-foot">
+            <span id="ramUsed">—</span>
+            <span class="dim" id="ramTotal">—</span>
+          </div>
+        </section>
+
+        <section class="card bar-card">
+          <div class="card-head">
+            <span class="card-title">Видеопамять</span>
+            <span class="card-sub" id="vramPercent">0%</span>
+          </div>
+          <div class="bar"><div class="bar-fill vram-fill" id="vramBar"></div></div>
+          <div class="bar-foot">
+            <span id="vramUsed">—</span>
+            <span class="dim" id="vramTotal">—</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- ИСТОРИЯ -->
+      <section class="card hist-card">
+        <div class="card-head">
+          <span class="card-title">История</span>
+          <span class="legend">
+            <span class="dot cpu"></span>CPU
+            <span class="dot gpu"></span>GPU
+            <span class="dim">· 60 секунд</span>
+          </span>
+        </div>
+        <canvas id="history"></canvas>
+      </section>
+
+      <!-- ЯДРА -->
+      <section class="card cores-card">
+        <div class="card-head">
+          <span class="card-title">Потоки</span>
+          <span class="card-sub" id="coresCount">—</span>
+        </div>
+        <div class="cores" id="cores"></div>
+      </section>
+
+    </main>
+
+    <!-- НИЖНЯЯ ПАНЕЛЬ МОНИТОРИНГА -->
+    <footer class="actions">
+      <button class="neon-btn" id="btnCpu">
+        <span class="glow"></span><span class="txt">Показать загрузку CPU</span>
+      </button>
+      <button class="neon-btn" id="btnGpu">
+        <span class="glow"></span><span class="txt">Показать загрузку GPU</span>
+      </button>
+      <div class="spacer"></div>
+      <button class="neon-btn small" id="btnElevate" style="display:none">
+        <span class="glow"></span><span class="txt">Запустить как администратор</span>
+      </button>
+      <div class="hint" id="hint"></div>
+    </footer>
+
+  </section>
+
+  <!-- ===================== МОЙ ПК ===================== -->
+  <section class="page" id="page-system">
+    <div class="sys-wrap">
+
+      <div class="sys-hero">
+        <div class="sys-hero-text">
+          <div class="sys-hero-device" id="sysDeviceLine">Определяю компьютер…</div>
+          <div class="sys-hero-sub" id="sysScanLine">—</div>
+        </div>
+        <button class="neon-btn small" id="btnRescan">
+          <span class="glow"></span><span class="txt">Сканировать заново</span>
+        </button>
+      </div>
+
+      <div class="card sys-card">
+        <div class="card-head">
+          <span class="card-title">Твой компьютер</span>
+          <span class="card-sub" id="sysWindows">—</span>
+        </div>
+
+        <div class="sys-rows">
+          <div class="sys-row">
+            <span class="sys-icon">CPU</span>
+            <div class="sys-text">
+              <div class="sys-value" id="sysCpu">—</div>
+              <div class="sys-desc" id="sysCpuDesc">—</div>
+            </div>
+            <span class="sys-badge" id="sysCpuTier">—</span>
+          </div>
+
+          <div class="sys-row">
+            <span class="sys-icon">GPU</span>
+            <div class="sys-text">
+              <div class="sys-value" id="sysGpu">—</div>
+              <div class="sys-desc" id="sysGpuDesc">—</div>
+            </div>
+            <span class="sys-badge" id="sysGpuVendor">—</span>
+          </div>
+
+          <div class="sys-row">
+            <span class="sys-icon">RAM</span>
+            <div class="sys-text">
+              <div class="sys-value" id="sysRam">—</div>
+              <div class="sys-desc" id="sysRamDesc">—</div>
+            </div>
+            <span class="sys-badge" id="sysRamBadge">—</span>
+          </div>
+
+          <div class="sys-row">
+            <span class="sys-icon">OS</span>
+            <div class="sys-text">
+              <div class="sys-value" id="sysOs">—</div>
+              <div class="sys-desc" id="sysOsDesc">—</div>
+            </div>
+            <span class="sys-badge" id="sysOsBadge">—</span>
+          </div>
+        </div>
+
+        <div class="card-head" style="margin-top:16px">
+          <span class="card-title">Накопители</span>
+          <span class="card-sub" id="sysDiskSummary">—</span>
+        </div>
+        <div class="disk-list" id="sysDisks"></div>
+      </div>
+
+      <div class="card sys-card">
+        <div class="card-head">
+          <span class="card-title">Что программа подстроила под тебя</span>
+          <span class="card-sub" id="sysNotesCount">—</span>
+        </div>
+        <div class="note-list" id="sysNotes"></div>
+      </div>
+
+      <div class="card sys-card">
+        <div class="card-head">
+          <span class="card-title">Отчёт о системе</span>
+          <span class="card-sub" id="sysProfileState">—</span>
+        </div>
+        <div class="oa-desc" id="sysProfilePath">—</div>
+        <div class="oa-desc" style="margin-top:7px">
+          Отчёт сохраняется в profile.json рядом с настройками. При следующем запуске
+          программа сверяет железо со своим отпечатком: изменилось — сканирует заново,
+          нет — берёт готовый отчёт, чтобы запуск был быстрым.
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="actions">
+      <div class="hint" id="sysHint">Программа определяет железо сама и подстраивает под него решения</div>
+    </footer>
+  </section>
+
+  <!-- ===================== ОЧИСТКА ===================== -->
+  <section class="page" id="page-clean">
+    <div class="clean-wrap">
+
+      <div class="card clean-card">
+        <div class="card-head">
+          <span class="card-title">Очистка диска</span>
+          <span class="card-sub" id="cleanStatus">нажмите «Анализ», чтобы узнать размеры</span>
+        </div>
+        <div class="clean-list" id="cleanList"></div>
+      </div>
+
+      <div class="clean-total">
+        <div class="ct">
+          <span class="ct-k">Найдено мусора</span>
+          <span class="ct-v" id="totalFound">—</span>
+        </div>
+        <div class="ct">
+          <span class="ct-k">Освобождено</span>
+          <span class="ct-v accent" id="totalFreed">—</span>
+        </div>
+        <div class="ct">
+          <span class="ct-k">Пропущено (занято)</span>
+          <span class="ct-v" id="totalSkipped">—</span>
+        </div>
+      </div>
+
+      <footer class="actions">
+        <button class="neon-btn" id="btnScan">
+          <span class="glow"></span><span class="txt">Анализ</span>
+        </button>
+        <button class="neon-btn danger" id="btnClean">
+          <span class="glow"></span><span class="txt">Очистить всё</span>
+        </button>
+        <div class="spacer"></div>
+        <div class="hint" id="cleanHint">Отметки не влияют на «Очистить всё» — он удаляет всё найденное</div>
+      </footer>
+
+    </div>
+  </section>
+
+  <!-- ===================== ОПТИМИЗАЦИЯ ===================== -->
+  <section class="page" id="page-optimize">
+    <div class="opt-wrap">
+
+      <div class="auto-card">
+        <div class="auto-text">
+          <div class="auto-title">Авто-оптимизация</div>
+          <div class="auto-desc">
+            Безопасный набор в одно нажатие: точка восстановления, схема питания «Максимум»,
+            отключение визуальных эффектов, автоочистка, фоновые приложения и чистка
+            временных файлов с корзиной. <b>Службы не трогает.</b>
+          </div>
+        </div>
+        <button class="auto-btn" id="btnAuto">
+          <span class="glow"></span><span class="txt">Запустить</span>
+        </button>
+      </div>
+
+      <div class="card opt-card">
+        <div class="card-head">
+          <span class="card-title">Службы Windows</span>
+          <span class="card-sub" id="svcSummary">—</span>
+        </div>
+        <div class="opt-list" id="svcList"></div>
+      </div>
+
+      <div class="card opt-card">
+        <div class="card-head">
+          <span class="card-title">Автозагрузка</span>
+          <span class="card-sub" id="startupSummary">—</span>
+        </div>
+        <div class="opt-list" id="startupList"></div>
+      </div>
+
+      <div class="card opt-card">
+        <div class="card-head">
+          <span class="card-title">Быстрые действия</span>
+          <span class="card-sub" id="powerState">—</span>
+        </div>
+        <div class="opt-actions">
+
+          <div class="oa-row">
+            <div class="oa-text">
+              <div class="oa-title">Схема питания</div>
+              <div class="oa-desc">Максимум отключает энергосбережение процессора</div>
+            </div>
+            <button class="neon-btn small" id="btnPowerHigh"><span class="glow"></span><span class="txt">Максимум</span></button>
+            <button class="neon-btn small" id="btnPowerBalanced"><span class="glow"></span><span class="txt">Сбалансированная</span></button>
+          </div>
+
+          <div class="oa-row">
+            <div class="oa-text">
+              <div class="oa-title">Визуальные эффекты</div>
+              <div class="oa-desc" id="visualState">—</div>
+            </div>
+            <button class="neon-btn small" id="btnVisualOff"><span class="glow"></span><span class="txt">Отключить</span></button>
+            <button class="neon-btn small" id="btnVisualOn"><span class="glow"></span><span class="txt">Вернуть</span></button>
+          </div>
+
+          <div class="oa-row">
+            <div class="oa-text">
+              <div class="oa-title">Контроль памяти</div>
+              <div class="oa-desc" id="storageState">—</div>
+            </div>
+            <button class="neon-btn small" id="btnStorageOn"><span class="glow"></span><span class="txt">Включить</span></button>
+            <button class="neon-btn small" id="btnStorageOff"><span class="glow"></span><span class="txt">Выключить</span></button>
+          </div>
+
+          <div class="oa-row">
+            <div class="oa-text">
+              <div class="oa-title">Точка восстановления</div>
+              <div class="oa-desc">Создайте перед изменениями — сможете откатить систему</div>
+            </div>
+            <button class="neon-btn small" id="btnRestore"><span class="glow"></span><span class="txt">Создать</span></button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card opt-card">
+        <div class="card-head">
+          <span class="card-title">Фоновые приложения</span>
+          <span class="card-sub" id="bgSummary">—</span>
+        </div>
+        <label class="opt-master">
+          <input type="checkbox" id="bgGlobal">
+          <span>Запретить всем приложениям работать в фоне</span>
+        </label>
+        <div class="opt-list" id="bgList"></div>
+      </div>
+
+      <div class="card opt-card">
+        <div class="card-head">
+          <span class="card-title">Обслуживание дисков</span>
+          <span class="card-sub" id="diskSummary">—</span>
+        </div>
+        <div class="disk-list" id="optDisks"></div>
+      </div>
+
+    </div>
+
+    <footer class="actions">
+      <button class="neon-btn danger" id="btnApply">
+        <span class="glow"></span><span class="txt">Применить изменения</span>
+      </button>
+      <div class="spacer"></div>
+      <div class="hint" id="optHint">Изменения применяются только по кнопке</div>
+    </footer>
+
+    <div class="modal" id="autoModal">
+      <div class="modal-box wide">
+        <div class="modal-title">Авто-оптимизация</div>
+        <div class="modal-text" id="autoStatus">Готовлюсь…</div>
+        <div class="auto-report" id="autoReport"></div>
+        <div class="modal-buttons">
+          <button class="neon-btn small" id="btnAutoClose" disabled>
+            <span class="glow"></span><span class="txt">Закрыть</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="optModal">
+      <div class="modal-box">
+        <div class="modal-title">Перед изменениями</div>
+        <div class="modal-text">
+          Рекомендую сначала создать точку восстановления. Если что-то пойдёт не так,
+          систему можно будет откатить к текущему состоянию.
+        </div>
+        <div class="modal-buttons">
+          <button class="neon-btn small" id="btnModalRestore"><span class="glow"></span><span class="txt">Создать и продолжить</span></button>
+          <button class="neon-btn small" id="btnModalSkip"><span class="glow"></span><span class="txt">Продолжить без неё</span></button>
+          <button class="neon-btn small" id="btnModalCancel"><span class="glow"></span><span class="txt">Отмена</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ИГРЫ ===================== -->
+  <section class="page" id="page-games">
+    <div class="game-wrap">
+
+      <div class="online-banner" id="onlineBanner" style="display:none"></div>
+
+      <div class="auto-card">
+        <div class="auto-text">
+          <div class="auto-title">Турбо-режим</div>
+          <div class="auto-desc">
+            Одним нажатием: чистит ОЗУ, закрывает лишние программы, включает максимальное питание
+            и поднимает приоритет игры. <b>Онлайн-игры и античиты не трогает вообще.</b>
+          </div>
+        </div>
+        <button class="auto-btn" id="btnTurbo">
+          <span class="glow"></span><span class="txt">Турбо</span>
+        </button>
+      </div>
+
+      <div class="card game-card">
+        <div class="game-row" style="margin-top:0;padding-top:0;border-top:0">
+          <div class="game-row-text">
+            <div class="oa-title">Оверлей с FPS и температурами</div>
+            <div class="oa-desc" id="overlayState">—</div>
+          </div>
+          <button class="neon-btn small" id="btnOverlay"><span class="glow"></span><span class="txt">Включить оверлей</span></button>
+        </div>
+      </div>
+
+      <div class="card game-card">
+        <div class="card-head">
+          <span class="card-title">Найденная игра</span>
+          <span class="card-sub" id="gameStatus">нажмите «Найти игру»</span>
+        </div>
+        <div class="game-found" id="gameFound"></div>
+        <button class="neon-btn" id="btnFindGame" style="margin-top:10px">
+          <span class="glow"></span><span class="txt">Найти игру</span>
+        </button>
+      </div>
+
+      <div class="card game-card">
+        <div class="card-head">
+          <span class="card-title">Фоновые процессы</span>
+          <span class="card-sub" id="bgProcSummary">—</span>
+        </div>
+        <div class="opt-list" id="bgProcList"></div>
+        <div class="game-note">
+          В этот список не попадают браузеры, игровые лаунчеры и VPN. Лаунчеры и VPN не закрываются никогда, а браузеры — только по отдельному подтверждению при оптимизации.
+        </div>
+      </div>
+
+      <div class="card game-card">
+        <div class="card-head">
+          <span class="card-title">Одиночные игры</span>
+          <span class="card-sub" id="libState">—</span>
+        </div>
+        <div class="opt-list" id="gameLibList"></div>
+        <div class="game-note">
+          Только одиночные игры из установленных в Steam. Онлайн-игры и всё от Valve сюда не попадают.
+        </div>
+      </div>
+
+      <div class="card game-card">
+        <div class="card-head">
+          <span class="card-title">Профили под игры</span>
+          <span class="card-sub" id="profState">—</span>
+        </div>
+        <div class="opt-list" id="profList"></div>
+        <div class="game-row">
+          <input class="prof-input" id="profName" placeholder="Название профиля, например «ETS2 — максимум»">
+          <button class="neon-btn small" id="btnSaveProfile"><span class="glow"></span><span class="txt">Сохранить</span></button>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="actions">
+      <button class="neon-btn danger" id="btnGameBoost">
+        <span class="glow"></span><span class="txt">Оптимизировать под игру</span>
+      </button>
+      <button class="neon-btn small" id="btnGameRestore">
+        <span class="glow"></span><span class="txt">Вернуть как было</span>
+      </button>
+      <div class="spacer"></div>
+      <div class="hint" id="gameHint">Найдите игру, отметьте лишние процессы и нажмите «Оптимизировать»</div>
+    </footer>
+
+    <div class="modal" id="browserModal">
+      <div class="modal-box wide">
+        <div class="modal-title">Закрыть браузеры перед игрой?</div>
+        <div class="modal-text">
+          Браузеры держат память, но в них могут быть открытые вкладки.
+          Отметьте те, которые не жалко — на ком галочки нет, тот останется работать.
+        </div>
+        <div class="auto-report" id="browserList"></div>
+        <div class="modal-buttons">
+          <button class="neon-btn danger" id="btnBrowsersYes">
+            <span class="glow"></span><span class="txt">Дааа, в пизду их)</span>
+          </button>
+          <button class="neon-btn small" id="btnBrowsersNo">
+            <span class="glow"></span><span class="txt">Не трогать браузеры</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="gameModal">
+      <div class="modal-box wide">
+        <div class="modal-title" id="gameModalTitle">Оптимизация под игру</div>
+        <div class="modal-text" id="gameReportStatus">Готовлюсь…</div>
+        <div class="auto-report" id="gameReport"></div>
+        <div class="modal-buttons">
+          <button class="neon-btn small" id="btnGameReportClose" disabled>
+            <span class="glow"></span><span class="txt">Закрыть</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== НАСТРОЙКИ ===================== -->
+  <section class="page" id="page-settings">
+    <div class="set-wrap">
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Оформление</span>
+          <span class="card-sub" id="themeState">—</span>
+        </div>
+        <div class="oa-row">
+          <div class="oa-text">
+            <div class="oa-title">Тема окна</div>
+            <div class="oa-desc">Переключается сразу, выбор сохраняется в settings.json</div>
+          </div>
+          <button class="neon-btn small" id="btnThemeDark"><span class="glow"></span><span class="txt">Тёмная</span></button>
+          <button class="neon-btn small" id="btnThemeLight"><span class="glow"></span><span class="txt">Светлая</span></button>
+        </div>
+
+        <div class="accent-row">
+          <div class="oa-text" style="min-width:180px">
+            <div class="oa-title">Цвет интерфейса</div>
+            <div class="oa-desc" id="accentState">—</div>
+          </div>
+          <div class="accent-grid" id="accentGrid"></div>
+        </div>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Температура процессора</span>
+          <span class="card-sub" id="tempState">—</span>
+        </div>
+        <div class="oa-row">
+          <div class="oa-text">
+            <div class="oa-title" id="tempSource">—</div>
+            <div class="oa-desc" id="tempNote">—</div>
+          </div>
+          <button class="neon-btn small" id="btnTempRetry"><span class="glow"></span><span class="txt">Проверить снова</span></button>
+        </div>
+        <label class="opt-master" style="margin-top:11px">
+          <input type="checkbox" id="chkAfterburner">
+          <span>Запускать MSI Afterburner, если своих датчиков нет</span>
+        </label>
+        <div class="oa-desc" style="margin:3px 0 11px 26px">
+          У Afterburner свой драйвер для чтения датчиков, и на многих платах он видит
+          температуру процессора там, где встроенный модуль бессилен. Программа
+          запускает его свёрнутым в трей и берёт показания из его монитора.
+        </div>
+        <div class="oa-row">
+          <div class="oa-text">
+            <div class="oa-desc" id="abPath">—</div>
+          </div>
+          <button class="neon-btn small" id="btnAbStart"><span class="glow"></span><span class="txt">Запустить Afterburner</span></button>
+        </div>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Сколько сэкономил</span>
+          <span class="card-sub" id="statsSince">—</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-num" id="stFreed">0</div>
+            <div class="stat-cap">ГБ очищено всего</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stHours">0</div>
+            <div class="stat-cap">часов сэкономлено</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="stOpts">0</div>
+            <div class="stat-cap">оптимизаций выполнено</div>
+          </div>
+        </div>
+        <div class="oa-row" style="margin-top:11px">
+          <div class="oa-text">
+            <div class="oa-desc">
+              Копится по всем запускам и хранится в файле stats.json — программа
+              помнит результат, даже если её закрыть.
+            </div>
+          </div>
+          <button class="neon-btn small" id="btnStatsReset"><span class="glow"></span><span class="txt">Сбросить счётчик</span></button>
+        </div>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Мини-оверлей и звук</span>
+          <span class="card-sub" id="miniState">—</span>
+        </div>
+        <label class="opt-master">
+          <input type="checkbox" id="chkMini">
+          <span>Показывать мини-оверлей на рабочем столе</span>
+        </label>
+        <div class="oa-desc" style="margin:3px 0 11px 26px">
+          Отдельное полупрозрачное окошко: процессор, видеокарта, температура и память.
+          Таскается мышкой, складывается в полоску, прячется в трей.
+          Поверх игр он не вылазит — для игр есть кнопка «Оверлей» на вкладке «Игры».
+        </div>
+        <label class="opt-master">
+          <input type="checkbox" id="chkSound">
+          <span>Звуки во время большой чистки</span>
+        </label>
+        <div class="oa-desc" style="margin:3px 0 0 26px">
+          Тиканье, «вжух» и финальный аккорд при освобождении места. Можно выключить.
+        </div>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Горячие клавиши</span>
+          <span class="card-sub">работают, даже когда окно свёрнуто в трей</span>
+        </div>
+        <div class="hot-grid">
+          <div class="hot-row">
+            <kbd>Ctrl</kbd><span class="hot-plus">+</span><kbd>Shift</kbd><span class="hot-plus">+</span><kbd>O</kbd>
+            <span class="hot-desc">открыть или свернуть окно</span>
+          </div>
+          <div class="hot-row">
+            <kbd>Ctrl</kbd><span class="hot-plus">+</span><kbd>Shift</kbd><span class="hot-plus">+</span><kbd>T</kbd>
+            <span class="hot-desc">турбо-режим</span>
+          </div>
+          <div class="hot-row">
+            <kbd>Ctrl</kbd><span class="hot-plus">+</span><kbd>Shift</kbd><span class="hot-plus">+</span><kbd>M</kbd>
+            <span class="hot-desc">мини-оверлей включить или выключить</span>
+          </div>
+          <div class="hot-row">
+            <kbd>Ctrl</kbd><span class="hot-plus">+</span><kbd>Shift</kbd><span class="hot-plus">+</span><kbd>C</kbd>
+            <span class="hot-desc">большая чистка</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Запуск с Windows</span>
+          <span class="card-sub" id="autorunState">—</span>
+        </div>
+        <label class="opt-master">
+          <input type="checkbox" id="chkAutorun">
+          <span>Запускать программу вместе с Windows</span>
+        </label>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Точки восстановления</span>
+          <span class="card-sub" id="rpState">—</span>
+        </div>
+        <div class="oa-row">
+          <div class="oa-text">
+            <div class="oa-title">Создать точку</div>
+            <div class="oa-desc">Снимок текущего состояния системы, к которому можно откатиться</div>
+          </div>
+          <button class="neon-btn small" id="btnMakeRestore"><span class="glow"></span><span class="txt">Создать</span></button>
+        </div>
+        <div class="opt-list" id="rpList" style="margin-top:9px"></div>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">Журнал действий</span>
+          <span class="card-sub" id="logState">—</span>
+        </div>
+        <div class="opt-list" id="logList"></div>
+        <div class="oa-row" style="margin-top:9px">
+          <div class="oa-text">
+            <div class="oa-desc" id="logPath">—</div>
+          </div>
+          <button class="neon-btn small" id="btnClearLog"><span class="glow"></span><span class="txt">Очистить журнал</span></button>
+        </div>
+      </div>
+
+      <div class="card set-card">
+        <div class="card-head">
+          <span class="card-title">О программе</span>
+          <span class="card-sub" id="aboutVersion">—</span>
+        </div>
+        <div class="about-grid">
+          <div class="about-row"><span class="about-k">Версия</span><span class="about-v" id="abVersion">—</span></div>
+          <div class="about-row"><span class="about-k">Автор</span><span class="about-v" id="abAuthor">—</span></div>
+          <div class="about-row" id="abRepoRow"><span class="about-k">GitHub</span><span class="about-v" id="abRepo">—</span></div>
+          <div class="about-row"><span class="about-k">Настройки</span><span class="about-v" id="abSettings">—</span></div>
+        </div>
+        <div class="oa-row" style="margin-top:9px">
+          <div class="oa-text">
+            <div class="oa-title">Обновления</div>
+            <div class="oa-desc" id="updateState">проверка вручную</div>
+          </div>
+          <button class="neon-btn small" id="btnCheckUpdates"><span class="glow"></span><span class="txt">Проверить обновления</span></button>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="actions">
+      <div class="hint" id="setHint">Настройки сохраняются автоматически</div>
+    </footer>
+  </section>
+
+</div>
+
+<!-- ===================== ВОПРОС ПРО МИНИ-ОВЕРЛЕЙ ===================== -->
+<div class="modal" id="miniAskModal">
+  <div class="modal-box">
+    <div class="modal-title">Включить мини-оверлей?</div>
+    <div class="modal-text">
+      Это маленькое полупрозрачное окошко прямо на рабочем столе: загрузка процессора
+      и видеокарты, температуры и память — всё время на виду.
+      Таскается мышкой, складывается в полоску, прячется в трей.
+      Поверх игр он не вылазит.
+    </div>
+    <div class="modal-buttons">
+      <button class="neon-btn small" id="btnMiniYes"><span class="glow"></span><span class="txt">Да</span></button>
+      <button class="neon-btn small" id="btnMiniNo"><span class="glow"></span><span class="txt">Нет</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== «БОЛЬШАЯ ЧИСТКА»: АНИМАЦИЯ ===================== -->
+<div class="clean-fx" id="cleanFx">
+  <canvas id="fxCanvas"></canvas>
+  <div class="fx-orbit"></div>
+  <div class="fx-pulse"><span></span><span></span><span></span></div>
+
+  <div class="fx-inner" id="fxInner">
+    <div class="fx-title" id="fxTitle">Большая чистка</div>
+    <div class="fx-bar"><div class="fx-bar-fill" id="fxBarFill"></div></div>
+    <div class="fx-percent" id="fxPercent">0%</div>
+    <div class="fx-steps" id="fxSteps"></div>
+    <div class="fx-current" id="fxCurrent">готовлюсь…</div>
+    <div class="fx-freed" id="fxFreed"></div>
+    <div class="fx-final" id="fxFinal">
+      <div class="fx-final-num" id="fxFinalNum">0 ГБ</div>
+      <div class="fx-final-cap" id="fxFinalCap">освобождено!</div>
+    </div>
+  </div>
+
+  <div class="fx-flash" id="fxFlash"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

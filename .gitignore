@@ -1,0 +1,73 @@
+# ============================================================
+#  PCOptimizer — что не нужно заливать на GitHub
+# ============================================================
+
+# --- сборка .NET ---
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.err
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# но исходные ресурсы программы нужны — возвращаем их обратно
+!Assets/app.ico
+!ui/**
+
+# --- Visual Studio / VS Code / Rider ---
+.vs/
+.vscode/
+.idea/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.DotSettings.user
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.VC.db
+*.VC.VC.opendb
+.vsconfig
+*.code-workspace
+
+# --- результат публикации и установщик ---
+publish/
+PCOptimizer_Publish/
+PCOptimizer_Setup.exe
+*.iss.bak
+
+# --- файлы, которые программа создаёт рядом с собой ---
+settings.json
+stats.json
+profile.json
+actions.log
+
+# --- прочее ---
+*.swp
+*~
+*.bak
+*.orig
+*.rej
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.stackdump
